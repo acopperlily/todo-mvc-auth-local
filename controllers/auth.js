@@ -3,15 +3,19 @@ const validator = require('validator')
 const User = require('../models/User')
 
  exports.getLogin = (req, res) => {
+  console.log('getLogin');
     if (req.user) {
+      console.log('if req.user?');
       return res.redirect('/todos')
     }
+    console.log('rendering login?');
     res.render('login', {
       title: 'Login'
     })
   }
   
   exports.postLogin = (req, res, next) => {
+    console.log('postLogin');
     const validationErrors = []
     if (!validator.isEmail(req.body.email)) validationErrors.push({ msg: 'Please enter a valid email address.' })
     if (validator.isEmpty(req.body.password)) validationErrors.push({ msg: 'Password cannot be blank.' })
@@ -22,7 +26,8 @@ const User = require('../models/User')
     }
     req.body.email = validator.normalizeEmail(req.body.email, { gmail_remove_dots: false })
   
-    passport.authenticate('local', (err, user, info) => {
+    passport.authenticate('basic', (err, user, info) => {
+      console.log('user:', user, info);
       if (err) { return next(err) }
       if (!user) {
         req.flash('errors', info)
@@ -71,7 +76,8 @@ const User = require('../models/User')
     const user = new User({
       userName: req.body.userName,
       email: req.body.email,
-      password: req.body.password
+      password: req.body.password,
+      qAnswer: req.body.qAnswer
     })
   
     User.findOne({$or: [
@@ -94,3 +100,40 @@ const User = require('../models/User')
       })
     })
   }
+
+// Test
+exports.getSecurityQuestion = (req, res) => {
+  console.log('test');
+  res.render('securityQuestion');
+}
+
+exports.confirmAnswer = (req, res, next) => {
+  console.log(req.body);
+  console.log('confirm answer');
+  
+  const validationErrors = []
+  if (!validator.isEmail(req.body.email)) validationErrors.push({ msg: 'Please enter a valid email address.' })
+  if (validator.isEmpty(req.body.qAnswer)) validationErrors.push({ msg: 'Answer cannot be blank.' })
+
+  if (validationErrors.length) {
+    req.flash('errors', validationErrors)
+    return res.redirect('/login')
+  }
+  req.body.email = validator.normalizeEmail(req.body.email, {gmail_remove_dots: false })
+
+  passport.authenticate('questions', (err, user, info) => {
+    console.log('um');
+    if (err) { return next(err) }
+    if (!user) {
+      console.log('no user?', err, info);
+      req.flash('errors', info)
+      return res.redirect('/login')
+    }
+    req.logIn(user, (err) => {
+      if (err) { return next(err) }
+      req.flash('success', { msg: 'Success! You are logged in' })
+      res.redirect(req.session.returnTo || '/todos')
+    })
+  })(req, res, next)
+
+}

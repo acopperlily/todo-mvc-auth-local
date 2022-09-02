@@ -11,4 +11,8 @@ router.get('/logout', authController.logout)
 router.get('/signup', authController.getSignup)
 router.post('/signup', authController.postSignup)
 
+// Test
+router.get('/securityQuestion', authController.getSecurityQuestion);
+router.post('/securityQuestion', authController.confirmAnswer);
+
 module.exports = router
