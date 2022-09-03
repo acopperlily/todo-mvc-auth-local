@@ -23,8 +23,10 @@ module.exports = function (passport) {
     })
   }))
 
-  passport.use('questions', new LocalStrategy({ usernameField: 'email' }, (email, answer, done) => {
-    console.log('question strategy?');
+  passport.use('questions', new LocalStrategy({
+      usernameField: 'email',
+      passwordField: 'qAnswer'
+    }, (email, answer, done) => {
       User.findOne({ email: email.toLowerCase() }, (err, user) => {
         if (err) {
           return done(err);
@@ -33,19 +35,19 @@ module.exports = function (passport) {
           return done(null, false, { msg: `Email ${email} not found.` });
         }
         if (!user.qAnswer) {
-          console.log('test passport');
           return done(null, false, {
             msg: 'Your account was registered using a sign-in provider. To enable password login, sign in using a provider, and then set a password under your user profile.',
           });
         }
-        user.comparePassword(answer, (err, isMatch) => {
+
+        user.compareAnswer(answer, (err, isMatch) => {
           if (err) {
             return done(err);
           }
           if (isMatch) {
             return done(null, user);
           }
-          return done(null, false, { msg: 'Invalid email or password.' });
+          return done(null, false, { msg: 'Invalid email or answer.' });
         });
       });
     })

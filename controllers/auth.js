@@ -15,7 +15,6 @@ const User = require('../models/User')
   }
   
   exports.postLogin = (req, res, next) => {
-    console.log('postLogin');
     const validationErrors = []
     if (!validator.isEmail(req.body.email)) validationErrors.push({ msg: 'Please enter a valid email address.' })
     if (validator.isEmpty(req.body.password)) validationErrors.push({ msg: 'Password cannot be blank.' })
@@ -66,6 +65,7 @@ const User = require('../models/User')
     if (!validator.isEmail(req.body.email)) validationErrors.push({ msg: 'Please enter a valid email address.' })
     if (!validator.isLength(req.body.password, { min: 8 })) validationErrors.push({ msg: 'Password must be at least 8 characters long' })
     if (req.body.password !== req.body.confirmPassword) validationErrors.push({ msg: 'Passwords do not match' })
+    if (validator.isEmpty(req.body.qAnswer)) validationErrors.push({ msg: 'Answer cannot be blank.'});
   
     if (validationErrors.length) {
       req.flash('errors', validationErrors)
@@ -101,16 +101,12 @@ const User = require('../models/User')
     })
   }
 
-// Test
+// Test security questions
 exports.getSecurityQuestion = (req, res) => {
-  console.log('test');
   res.render('securityQuestion');
 }
 
-exports.confirmAnswer = (req, res, next) => {
-  console.log(req.body);
-  console.log('confirm answer');
-  
+exports.confirmAnswer = (req, res, next) => {  
   const validationErrors = []
   if (!validator.isEmail(req.body.email)) validationErrors.push({ msg: 'Please enter a valid email address.' })
   if (validator.isEmpty(req.body.qAnswer)) validationErrors.push({ msg: 'Answer cannot be blank.' })
@@ -122,10 +118,8 @@ exports.confirmAnswer = (req, res, next) => {
   req.body.email = validator.normalizeEmail(req.body.email, {gmail_remove_dots: false })
 
   passport.authenticate('questions', (err, user, info) => {
-    console.log('um');
     if (err) { return next(err) }
     if (!user) {
-      console.log('no user?', err, info);
       req.flash('errors', info)
       return res.redirect('/login')
     }
